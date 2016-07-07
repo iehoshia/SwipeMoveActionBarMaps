@@ -5,4 +5,9 @@
     <string name="title_activity_first_fragment">FirstFragment</string>
     <string name="title_activity_second_fragment">SecondFragment</string>
     <string name="title_activity_maps">Map</string>
+    <string name="title_activity_sign_in">SignInActivity</string>
+    <string name="sign_in">Ingresar</string>
+    <string name="action_sing_out">Salir</string>
+    <string name="facebook_app_id">498889613649288</string>
+
 </resources>

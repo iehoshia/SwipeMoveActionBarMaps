@@ -5,9 +5,9 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:fitsSystemWindows="true"
-    tools:context="com.example.iehoshia.swipemoveactionbar.SecondFragment">
+    tools:context="com.example.iehoshia.swipemoveactionbar.FirstFragment">
 
-    <include layout="@layout/content_second_fragment" />
+    <include layout="@layout/content_first_fragment" />
 
 
 </android.support.design.widget.CoordinatorLayout>

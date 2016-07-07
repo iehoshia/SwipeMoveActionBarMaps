@@ -1,5 +1,10 @@
 package com.example.iehoshia.swipemoveactionbar;
 
+import android.content.Intent;
+import android.content.SharedPreferences;
+import android.graphics.drawable.Drawable;
+import android.preference.PreferenceManager;
+import android.support.annotation.NonNull;
 import android.support.design.widget.TabLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
@@ -11,6 +16,9 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.os.Bundle;
+import android.text.SpannableStringBuilder;
+import android.text.Spanned;
+import android.text.style.ImageSpan;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -19,7 +27,27 @@ import android.view.ViewGroup;
 
 import android.widget.TextView;
 
-public class MainActivity extends AppCompatActivity {
+import com.facebook.FacebookSdk;
+import com.google.android.gms.auth.api.Auth;
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+
+public class MainActivity extends AppCompatActivity  implements GoogleApiClient.OnConnectionFailedListener {
+
+
+    private static final String TAG = "MainActivity";
+    public static final String ANONYMOUS = "anonymous";
+    private String mUsername;
+    private String mPhotoUrl;
+
+    private SharedPreferences mSharedPreferences;
+    private GoogleApiClient mGoogleApiClient;
+
+    // Firebase instance variables
+    private FirebaseAuth mFirebaseAuth;
+    private FirebaseUser mFirebaseUser;
 
     /**
      * The {@link android.support.v4.view.PagerAdapter} that will provide
@@ -39,7 +67,37 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        FacebookSdk.sdkInitialize(getApplicationContext());
+
+
         setContentView(R.layout.activity_main);
+
+        //Firebase SharedPreferences
+        mSharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+        // Set default username is anonymous.
+        mUsername = ANONYMOUS;
+
+
+        // Initialize Firebase Auth
+        mFirebaseAuth = FirebaseAuth.getInstance();
+        mFirebaseUser = mFirebaseAuth.getCurrentUser();
+        if (mFirebaseUser == null) {
+            // Not signed in, launch the Sign In activity
+            startActivity(new Intent(this, SignInActivity.class));
+            finish();
+            return;
+        } else {
+            mUsername = mFirebaseUser.getDisplayName();
+            if (mFirebaseUser.getPhotoUrl() != null) {
+                mPhotoUrl = mFirebaseUser.getPhotoUrl().toString();
+            }
+        }
+
+        mGoogleApiClient = new GoogleApiClient.Builder(this)
+                .enableAutoManage(this /* FragmentActivity */, this /* OnConnectionFailedListener */)
+                .addApi(Auth.GOOGLE_SIGN_IN_API)
+                .build();
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -54,14 +112,16 @@ public class MainActivity extends AppCompatActivity {
         TabLayout tabLayout = (TabLayout) findViewById(R.id.tabs);
         tabLayout.setupWithViewPager(mViewPager);
 
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
+        /*FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
+                mFirebaseAuth.signOut();
+                mUsername = ANONYMOUS;
+                Intent in = new Intent(MainActivity.this, SignInActivity.class);
+                startActivity(in);
             }
-        });
+        });*/
     }
 
 
@@ -80,11 +140,20 @@ public class MainActivity extends AppCompatActivity {
         int id = item.getItemId();
 
         //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
+        if (id == R.id.action_sign_out) {
+            mFirebaseAuth.signOut();
+            mUsername = ANONYMOUS;
+            Intent in = new Intent(MainActivity.this, SignInActivity.class);
+            startActivity(in);
             return true;
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
+
     }
 
     /**
@@ -137,9 +206,11 @@ public class MainActivity extends AppCompatActivity {
             // getItem is called to instantiate the fragment for the given page.
             // Return a PlaceholderFragment (defined as a static inner class below).
             //return PlaceholderFragment.newInstance(position + 1);
+
             switch (position) {
                 case 0: // Fragment # 0 - This will show FirstFragment
-                    return FirstFragment.newInstance(0, "Page # 1");
+
+                    return FirstFragment.newInstance();
                 case 1: // Fragment # 0 - This will show FirstFragment different title
                     return SecondFragment.newInstance(1, "Page # 2");
                 case 2: // Fragment # 1 - This will show SecondFragment
@@ -157,9 +228,22 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         public CharSequence getPageTitle(int position) {
+            Drawable myDrawable;
+            SpannableStringBuilder sb;
+            ImageSpan span;
             switch (position) {
                 case 0:
-                    return "SECTION 1";
+
+
+                    myDrawable = getResources().getDrawable(R.drawable.ic_launcher);
+                    myDrawable.setBounds(0, 0, myDrawable.getIntrinsicWidth(), myDrawable.getIntrinsicHeight());
+
+                    sb = new SpannableStringBuilder("Foto"); // space added before text for convenience
+                    span = new ImageSpan(myDrawable, ImageSpan.ALIGN_BOTTOM);
+                    sb.setSpan(span, 0, 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+
+                    return sb;
+                    //return "SECTION 1";
                 case 1:
                     return "SECTION 2";
                 case 2:
